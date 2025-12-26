@@ -1,0 +1,7 @@
+{
+  "nodeModulesDir": "auto",
+  "exactOptionalPropertyTypes": true,
+  "imports": {
+    "effect": "npm:effect@^3.19.13"
+  }
+}
