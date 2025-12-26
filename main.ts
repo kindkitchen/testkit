@@ -4,7 +4,7 @@ const make_fixture = {
       const with_state_derivations = <
         P extends Record<
           string,
-          (param: unknown) => (d: Partial<D>) => unknown
+          (param: any) => (d: Partial<D>) => unknown
         >,
       >(
         derivations_dict: P,
@@ -72,3 +72,17 @@ const make_fixture = {
     };
   },
 };
+
+if (import.meta.main) {
+  const users = make_fixture
+    .with_labels<["me"]>()
+    .with_data_source_type<{}>()
+    .with_state_derivations({
+      init: (name: string) => (d) => ({ ...d, name }),
+    })
+    .build([{}, ["me"]]);
+
+  const nik = users.compute.init("nik").me;
+
+  console.log(nik(), nik(), nik());
+}
