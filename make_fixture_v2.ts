@@ -1,26 +1,42 @@
 export const make_fixture = <
   T extends [
+    unique_getter_tip:
+      "The dictionary, which represent api to get unique fixture by some predicate:",
     UNIQUE_GETTER:
       | Record<
         string,
         (
-          predicate: (param: Partial<RestAfterSecond<T>[number][0]>) => boolean,
-        ) => Partial<RestAfterSecond<T>[number][0]>
+          predicate: (param: Partial<RestAfterFifth<T>[number][0]>) => boolean,
+        ) => Partial<RestAfterFifth<T>[number][0]>
       >
       | null,
+    state_computer_tip:
+      "The dictionary, which represent api, to compute specific representation of the data:",
     STATE_COMPUTER: Record<
       string,
       (
-        data: Partial<RestAfterSecond<T>[number][0]>,
-      ) => Partial<RestAfterSecond<T>[number][0]>
+        data: Partial<RestAfterFifth<T>[number][0]>,
+      ) => Partial<RestAfterFifth<T>[number][0]>
     >,
+    variants_tip:
+      "Any amount of variants - [initial data, ...all labels with which it should be associated]:",
     ...VARIANTS: [
       data: Record<string, unknown>,
       ...labels: string[],
     ][],
   ],
->([unique_getter, state_computer, ...variants]: T) => {
+>(...[_tip1, unique_getter, _tip2, state_computer, _tip3, ...variants]: T) => {
 };
+
+make_fixture(
+  "The dictionary, which represent api to get unique fixture by some predicate:",
+  {},
+  "The dictionary, which represent api, to compute specific representation of the data:",
+  {},
+  "Any amount of variants - [initial data, ...all labels with which it should be associated]:",
+  [{}, "", "", ""],
+  [{}, "", "", ""],
+);
 
 /**
  * What I want to create?
@@ -36,6 +52,16 @@ export const make_fixture = <
  * 3. State - derivation from data. So it is particular representation of the data. 1 fixture 1 data ++states
  *    - should be always computed, so if data is changed, the representation should be automatically recalculated on each retrieve
  */
+
+type RestAfterFifth<T> = T extends [
+  infer First,
+  infer Second,
+  infer Third,
+  infer Fourth,
+  infer Fifth,
+  ...infer Rest,
+] ? Rest
+  : never;
 type RestAfterSecond<T> = T extends [infer First, infer Second, ...infer Rest]
   ? Rest
   : never;
