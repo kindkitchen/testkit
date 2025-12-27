@@ -5,8 +5,9 @@ export const make_fixture = <
     UNIQUE_GETTER: Record<
       string,
       (
-        predicate: (param: Partial<RestAfterFifth<T>[number][0]>) => boolean,
-      ) => Partial<RestAfterFifth<T>[number][0]> | null
+        param: Partial<RestAfterFifth<T>[number][0]>,
+        ...rest: unknown[]
+      ) => boolean
     >,
     state_computer_tip:
       "The dictionary, which represent api, to compute specific representation of the data:",
@@ -26,10 +27,49 @@ export const make_fixture = <
 >(
   ...[_tip1, unique_getter, _tip2, state_computer, _tip3, ...variants]: T
 ) => {
+  const all_data_sources = variants.reduce((acc, [data]) => {
+    acc.push({ data });
+
+    return acc;
+  }, [] as { data: RestAfterFifth<T>[number][0] }[]);
   const output = {
-    one_unique: {}, /// TODO
-    compute_state: {}, /// TODO
-    with_label: {}, /// TODO
+    one_unique: (Object.entries(unique_getter) as {
+      [k in keyof T[1]]: [k, T[1][k]];
+    }[keyof T[1]][]).reduce(
+      (acc, [name, fn]) => {
+        acc[name] = (...params) => {
+          const needle = all_data_sources.find((d) => fn(d.data, ...params));
+
+          if (!needle) {
+            return null;
+          }
+
+          return {
+            update_data_source: (logic) => {
+              needle.data = logic(needle.data);
+            },
+          };
+        };
+        return acc;
+      },
+      {} as {
+        [k in keyof T[1]]: (
+          ...params: RestAfterFirst<Parameters<T[1][k]>>
+        ) => null | {
+          update_data_source: (
+            update_logic: (
+              actual: Partial<RestAfterFifth<T>[number][0]>,
+            ) => Partial<RestAfterFifth<T>[number][0]>,
+          ) => void;
+        };
+      },
+    ), /// TODO
+    compute_state: Object.entries(state_computer).reduce((acc, [name, fn]) => {
+      return acc;
+    }, {} as any), /// TODO
+    with_label: variants.reduce((acc, [data, ...labels]) => {
+      return acc;
+    }, {} as any), /// TODO
   };
 
   return output;
@@ -71,6 +111,8 @@ type RestAfterFifth<T> = T extends [
   : never;
 type RestAfterSecond<T> = T extends [infer First, infer Second, ...infer Rest]
   ? Rest
+  : never;
+type RestAfterFirst<T> = T extends [infer First, ...infer Rest] ? Rest
   : never;
 
 type FirstSecondThird<T> = T extends [infer First, infer Second, infer Third]
