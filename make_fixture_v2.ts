@@ -1,24 +1,25 @@
 export const make_fixture = <
-  T extends FirstSecondRest<[
+  T extends [
     UNIQUE_GETTER:
       | Record<
         string,
         (
-          predicate: (param: Partial<T["Rest"][number][0]>) => boolean,
-        ) => Partial<T["Rest"][number][0]>
+          predicate: (param: Partial<RestAfterSecond<T>[number][0]>) => boolean,
+        ) => Partial<RestAfterSecond<T>[number][0]>
       >
       | null,
     STATE_COMPUTER: Record<
       string,
-      (data: Partial<T["Rest"][number][0]>) => Partial<T["Rest"][number][0]>
+      (
+        data: Partial<RestAfterSecond<T>[number][0]>,
+      ) => Partial<RestAfterSecond<T>[number][0]>
     >,
-    ...DATA_WITH_LABELS: [
+    ...VARIANTS: [
       data: Record<string, unknown>,
       ...labels: string[],
     ][],
-  ]>,
->(...variants: T) => {
-  return {} as any;
+  ],
+>([unique_getter, state_computer, ...variants]: T) => {
 };
 
 /**
@@ -35,6 +36,9 @@ export const make_fixture = <
  * 3. State - derivation from data. So it is particular representation of the data. 1 fixture 1 data ++states
  *    - should be always computed, so if data is changed, the representation should be automatically recalculated on each retrieve
  */
+type RestAfterSecond<T> = T extends [infer First, infer Second, ...infer Rest]
+  ? Rest
+  : never;
 
 type FirstSecondThird<T> = T extends [infer First, infer Second, infer Third]
   ? {
