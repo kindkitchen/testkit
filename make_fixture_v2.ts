@@ -27,12 +27,12 @@ export const make_fixture = <
 >(
   ...[_tip1, unique_getter, _tip2, state_computer, _tip3, ...variants]: T
 ) => {
-  const all_data_sources = variants.reduce((acc, [data]) => {
-    acc.push({ data });
+  const all_pointers_to_data_source = variants.reduce((acc, [_data]) => {
+    acc.push({ _data });
 
     return acc;
-  }, [] as { data: RestAfterFifth<T>[number][0] }[]);
-  const all_label_groups = variants
+  }, [] as { _data: RestAfterFifth<T>[number][0] }[]);
+  const pointers_grouped_by_label = variants
     .flatMap(([data, ...labels]) =>
       labels.map((label) =>
         [data, label] as [
@@ -47,13 +47,22 @@ export const make_fixture = <
           acc[label] = [];
         }
 
-        acc[label].push(data);
+        acc[label].push(
+          all_pointers_to_data_source.find(({ _data }) => _data === data)!, /// The <!> is allowed here:
+          /// It 100% should be find!
+          /// Why?
+          /// Because we iterate same data objects (so triple equals should work).
+          /// Because this is sync code (so anyone except us has time to modify refs to data objects)
+          /// Because till this moment we are not touch refs.
+          /// BTW after this step - we will free to do this, because now
+          /// we trust our explicit pointers ({ _data: ... })
+        );
 
         return acc;
       },
       {} as Record<
         RestAfterFifth<T>[number][1][number],
-        RestAfterFifth<T>[number][0][]
+        { _data: RestAfterFifth<T>[number][0] }[]
       >,
     );
   const output = {
@@ -62,22 +71,24 @@ export const make_fixture = <
     }[keyof T[1]][]).reduce(
       (acc, [name, fn]) => {
         acc[name] = (...params) => {
-          const needle = all_data_sources.find((d) => fn(d.data, ...params));
+          const pointer = all_pointers_to_data_source.find((d) =>
+            fn(d._data, ...params)
+          );
 
-          if (!needle) {
+          if (!pointer) {
             return null;
           }
 
           return {
             update_data_source: (logic) => {
-              needle.data = logic(needle.data);
+              pointer._data = logic(pointer._data);
             },
             as_state: (Object.entries(state_computer) as {
               [k in keyof T[3]]: [k, T[3][k]];
             }[keyof T[3]][]).reduce(
               (acc, [name, fn]) => {
                 acc[name] = () =>
-                  fn(needle.data) as ReturnType<T[3][typeof name]>;
+                  fn(pointer._data) as ReturnType<T[3][typeof name]>;
 
                 return acc;
               },
