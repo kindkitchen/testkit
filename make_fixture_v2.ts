@@ -28,6 +28,9 @@ export const make_fixture = <
 >(
   ...[_tip1, unique_getter, _tip2, state_computer, _tip3, ...variants]: T
 ) => {
+  const entries_from_state_computer = Object.entries(state_computer) as {
+    [k in keyof T[3]]: [k, T[3][k]];
+  }[keyof T[3]][];
   const all_pointers_to_data_source = variants.reduce((acc, [_data]) => {
     acc.push({ _data });
 
@@ -66,6 +69,12 @@ export const make_fixture = <
         { _data: RestAfterFifth<T>[number][0] }[]
       >,
     );
+  const entries_from_pointers_grouped_by_label = Object.entries(
+    pointers_grouped_by_label,
+  ) as [
+    RestAfterFifth<T>[number][1][number],
+    { _data: RestAfterFifth<T>[number][0] }[],
+  ][];
   const output = {
     one_unique: (Object.entries(unique_getter) as {
       [k in keyof T[1]]: [k, T[1][k]];
@@ -84,9 +93,7 @@ export const make_fixture = <
             update_data_source: (logic) => {
               pointer._data = logic(pointer._data);
             },
-            as_state: (Object.entries(state_computer) as {
-              [k in keyof T[3]]: [k, T[3][k]];
-            }[keyof T[3]][]).reduce(
+            as_state: entries_from_state_computer.reduce(
               (acc, [name, fn]) => {
                 acc[name] = () =>
                   fn(pointer._data) as ReturnType<T[3][typeof name]>;
@@ -117,15 +124,10 @@ export const make_fixture = <
         };
       },
     ),
-    compute_state: (Object.entries(state_computer) as {
-      [k in keyof T[3]]: [k, T[3][k]];
-    }[keyof T[3]][]).reduce(
+    compute_state: entries_from_state_computer.reduce(
       (acc, [name, fn]) => {
         if (!acc[name]) {
-          acc[name] = (Object.entries(pointers_grouped_by_label) as [
-            RestAfterFifth<T>[number][1][number],
-            { _data: RestAfterFifth<T>[number][0] }[],
-          ][]).reduce(
+          acc[name] = entries_from_pointers_grouped_by_label.reduce(
             (acc2, [label, pointers]) => {
               acc2[label] = () => {
                 const x = pointers.map(({ _data }) => fn(_data));
@@ -149,9 +151,38 @@ export const make_fixture = <
         >;
       },
     ),
-    with_label: variants.reduce((acc, [data, ...labels]) => {
-      return acc;
-    }, {} as any), /// TODO
+    with_label: variants.reduce(
+      (
+        acc,
+        [_data, ...labels]: RestAfterFifth<T>[number],
+      ) => {
+        labels.forEach(
+          (l: RestAfterFirst<RestAfterFifth<T>[number]>[number]) => {
+            acc[l] = entries_from_state_computer.reduce((acc2, [name, fn]) => {
+              acc2.as_state[name] = () =>
+                pointers_grouped_by_label[l].map(
+                  ({ _data }) => fn(_data),
+                );
+              return acc2;
+            }, { as_state: {} } as {
+              as_state: {
+                [k in keyof T[3]]: () => ReturnType<T[3][k]>[];
+              };
+            });
+          },
+        );
+
+        return acc;
+      },
+      {} as Record<
+        RestAfterFirst<RestAfterFifth<T>[number]>[number],
+        {
+          as_state: {
+            [k in keyof T[3]]: () => ReturnType<T[3][k]>[];
+          };
+        }
+      >,
+    ),
   };
 
   return output;
