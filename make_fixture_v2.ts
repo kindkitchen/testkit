@@ -48,6 +48,19 @@ export const make_fixture = <
             update_data_source: (logic) => {
               needle.data = logic(needle.data);
             },
+            as_state: (Object.entries(state_computer) as {
+              [k in keyof T[3]]: [k, T[3][k]];
+            }[keyof T[3]][]).reduce(
+              (acc, [name, fn]) => {
+                acc[name] = () =>
+                  fn(needle.data) as ReturnType<T[3][typeof name]>;
+
+                return acc;
+              },
+              {} as {
+                [k in keyof T[3]]: () => ReturnType<T[3][k]>;
+              },
+            ),
           };
         };
         return acc;
