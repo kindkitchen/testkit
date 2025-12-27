@@ -15,7 +15,8 @@ export const make_fixture = <
       string,
       (
         data: Partial<RestAfterFifth<T>[number][0]>,
-      ) => Partial<RestAfterFifth<T>[number][0]>
+      ) => // deno-lint-ignore no-explicit-any
+      any /// hmm... <unknown> is not working for some reason...
     >,
     variants_tip:
       "Any amount of variants - ...[initial data, ...all labels with which it should be associated][]:",
@@ -112,12 +113,42 @@ export const make_fixture = <
           as_state: {
             [k in keyof T[3]]: () => ReturnType<T[3][k]>;
           };
+          /// TODO: will be cool to add possibility to add/remove to/from label group for this data-set
         };
       },
-    ), /// TODO
-    compute_state: Object.entries(state_computer).reduce((acc, [name, fn]) => {
-      return acc;
-    }, {} as any), /// TODO
+    ),
+    compute_state: (Object.entries(state_computer) as {
+      [k in keyof T[3]]: [k, T[3][k]];
+    }[keyof T[3]][]).reduce(
+      (acc, [name, fn]) => {
+        if (!acc[name]) {
+          acc[name] = (Object.entries(pointers_grouped_by_label) as [
+            RestAfterFifth<T>[number][1][number],
+            { _data: RestAfterFifth<T>[number][0] }[],
+          ][]).reduce(
+            (acc2, [label, pointers]) => {
+              acc2[label] = () => {
+                const x = pointers.map(({ _data }) => fn(_data));
+
+                return x;
+              };
+              return acc2;
+            },
+            {} as Record<
+              RestAfterFifth<T>[number][1][number],
+              () => ReturnType<T[3][keyof T[3]]>[]
+            >,
+          );
+        }
+        return acc;
+      },
+      {} as {
+        [k in keyof T[3]]: Record<
+          RestAfterFifth<T>[number][1][number],
+          () => ReturnType<T[3][k]>[]
+        >;
+      },
+    ),
     with_label: variants.reduce((acc, [data, ...labels]) => {
       return acc;
     }, {} as any), /// TODO
