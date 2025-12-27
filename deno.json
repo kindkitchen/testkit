@@ -4,5 +4,9 @@
   "imports": {
     "effect": "npm:effect@^3.19.13"
   },
-  "version": "0.1.0"
+  "name": "@kindkitchen/testing_lab",
+  "version": "v0.1.0",
+  "exports": {
+    "./make_fixture": "./make_fixture_v2.ts"
+  }
 }
