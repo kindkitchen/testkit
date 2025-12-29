@@ -1,11 +1,6 @@
 export const make_fixture = {
   /**
-   * Next generic only helper, that should extend
-   * `string[]
-   */
-  /**
-   * A lot of properties are syntax sugar with purp
-   * ose
+   * A lot of properties are syntax sugar with purpose
    * to simplify process of constructing pretty difficult
    * internal data-structure for fixture. Also it may
    * help to understand main ideas and purposes with which
@@ -33,17 +28,20 @@ export const make_fixture = {
      * **This is generic type, that you should provide and nothing more**
      */
     for_data_type: <
-      T extends
+      T_data extends
         | Record<string, any>
-        | "ERROR: Explicit generic is missing! Should be something like: for_data_type<{...}>()" =
-          "ERROR: Explicit generic is missing! Should be something like: for_data_type<{...}>()",
-    >(..._warning: T extends string ? [T, never] : []) => {
+        | _T_help_message_for_data_type = _T_help_message_for_data_type,
+    >(
+      ..._warning: T_data extends _T_help_message_for_data_type
+        ? [_T_help_message_for_data_type, never]
+        : []
+    ) => {
       return {
         /**
          * Next generic only helper, that should extend
-         * `string[]` type, for example:
+         * `string` type, for example:
          * ```ts
-         * .with_possible_tags<["all", "verified_only", "men"]>
+         * .with_possible_tags<"all", "verified_only", "men">
          * ```
          * These tags will be used to mark fixtures and so have ability
          * to group them by some criteria. Because this is tag - fixture
@@ -53,12 +51,15 @@ export const make_fixture = {
          * for better typescript inference**
          */
         with_possible_tags: (<
-          T extends (
-            | string[]
-            | "ERROR: Explicit generic is missing! Should be something like: with_possible_tags<['example', 'demo', 'tip']>()"
-          ) =
-            "ERROR: Explicit generic is missing! Should be something like: with_possible_tags<['example', 'demo', 'tip']>()",
-        >(..._warning: T extends string ? [T, never] : []) => {
+          T_tags extends (
+            | string
+            | _T_help_message_with_possible_tags
+          ) = _T_help_message_with_possible_tags,
+        >(
+          ..._warning: T_tags extends _T_help_message_with_possible_tags | ""
+            ? [_T_help_message_with_possible_tags, never]
+            : []
+        ) => {
           return {
             /**
              * This is object, in which each property is represented
@@ -75,7 +76,51 @@ export const make_fixture = {
              * }
              * ```
              */
-            data_can_be_transformed_into_such_views: () => {
+            data_can_be_transformed_into_such_views: <
+              T_transformer extends Record<
+                string,
+                (d: T_data, ...params: any[]) => unknown
+              >,
+            >(transformer: T_transformer) => {
+              return {
+                /**
+                 * Complete building fixture-set by providing
+                 * implementation.
+                 * Each property is fixture-wrapper, with fixture itself
+                 * and all tags associated with this fixture.
+                 */
+                build: <
+                  T_fixture_set extends Record<
+                    string,
+                    { fixture: Partial<T_data>; tags: T_tags[] }
+                  >,
+                >(fixture_set: T_fixture_set): {
+                  one_by_name: Record<keyof T_fixture_set, {
+                    as: {
+                      [k in keyof T_transformer]: (
+                        ...params: FirstRest<Parameters<T_transformer[k]>>[1]
+                      ) => () => ReturnType<T_transformer[k]>;
+                    };
+                    add_to_more_tags: (...tag: T_tags[]) => void;
+                    remove_from_tags: (...tag: T_tags[]) => void;
+                    update_data_source: (
+                      update_logic: (d: Partial<T_data>) => Partial<T_data>,
+                    ) => void;
+                  }>;
+                  many_with_tag: Record<T_tags, {
+                    as: {
+                      [k in keyof T_transformer]: (
+                        ...params: FirstRest<Parameters<T_transformer[k]>>[1]
+                      ) => () => ReturnType<T_transformer[k]>[];
+                    };
+                    foreach_update_data_source: (
+                      update_logic: (d: Partial<T_data>) => Partial<T_data>,
+                    ) => void;
+                  }>;
+                } => {
+                  return {} as any;
+                },
+              };
             },
           };
         }),
@@ -84,7 +129,70 @@ export const make_fixture = {
   },
 };
 
-make_fixture
+type User = {
+  id: string;
+  name: string;
+  age: number;
+  sex: "male" | "female";
+};
+type UserFixtureTag =
+  | "programmers"
+  | "men"
+  | "women"
+  | "go"
+  | "rust"
+  | "js"
+  | "oboe"
+  | "drums";
+const alex = {
+  name: "alex",
+  age: 23,
+  sex: "male" as const,
+};
+const nik = {
+  name: "nik",
+  age: 34,
+  sex: "male" as const,
+};
+const olivia = {
+  name: "olivia",
+  age: 20,
+  sex: "female" as const,
+};
+const fixture = make_fixture
   .start_builder_chain
-  .for_data_type<{}>()
-  .with_possible_tags<[]>();
+  .for_data_type<User>()
+  .with_possible_tags<UserFixtureTag>()
+  .data_can_be_transformed_into_such_views({
+    create_dto: ({ name, age, sex }) => ({ name, age, sex }),
+    with_friends: ({ id }, friends: User[]) => ({ id, friends }),
+    detailed: ({ id, name, age, sex }) => {
+      const [first_name, last_name] = name.split(" ");
+      return {
+        id,
+        first_name,
+        last_name,
+        age,
+        is_adult: age >= 18,
+        sex,
+      };
+    },
+  })
+  .build({
+    nik: { fixture: nik, tags: ["men", "oboe", "programmers", "rust", "js"] },
+    alex: { fixture: alex, tags: ["men", "drums", "programmers", "go", "js"] },
+    olivia: { fixture: olivia, tags: ["women", "oboe"] },
+  });
+
+fixture.many_with_tag.rust.foreach_update_data_source((d) => ({
+  ...d,
+  name: `${d.sex === "male" ? "Mr." : "Ms."} ${d.name}`,
+}));
+fixture.one_by_name.nik.add_to_more_tags("oboe");
+
+type FirstRest<T> = T extends [infer First, ...infer Rest] ? [First, Rest]
+  : never;
+type _T_help_message_for_data_type =
+  "ERROR: Explicit generic is missing! Should be something like: for_data_type<{...}>()";
+type _T_help_message_with_possible_tags =
+  "ERROR: Explicit generic is missing! Should be something like: with_possible_tags<['example', 'demo', 'tip']>()";
