@@ -42,3 +42,91 @@ input's data-set)_ and **list** of fixture associated with some tag.
 - generate `view` for fixture's representation
 - associate fixture with tag
 - remove association with some tag
+
+## Example:
+
+```ts
+import { make_fixture } from "./make_fixture.ts";
+
+type User = {
+  id: string;
+  name: string;
+  age: number;
+  sex: "male" | "female";
+};
+type UserFixtureTag =
+  | "programmers"
+  | "men"
+  | "women"
+  | "go"
+  | "rust"
+  | "js"
+  | "oboe"
+  | "drums";
+
+const create_dto = ({ name, age, sex }: Partial<User>) => ({ name, age, sex });
+const with_friends = ({ id }: Partial<User>, friends: User[]) => ({
+  id,
+  friends,
+});
+const detailed = ({ id, name, age, sex }: Partial<User>) => {
+  const [first_name, last_name] = name!.split(" ");
+  return {
+    id,
+    first_name,
+    last_name,
+    age,
+    is_adult: age! >= 18,
+    sex,
+  };
+};
+const fixture = make_fixture.start_builder_chain
+  .for_data_type<User>()
+  .with_possible_tags<UserFixtureTag>()
+  .data_can_be_transformed_into_such_views({
+    create_dto,
+    with_friends,
+    detailed,
+  })
+  .build({
+    nik: {
+      fixture: {
+        name: "nik",
+        age: 34,
+        sex: "male" as const,
+      },
+      tags: ["men", "drums", "programmers", "go", "js"],
+    },
+    alex: {
+      fixture: {
+        name: "alex",
+        age: 23,
+        sex: "male" as const,
+      },
+      tags: ["men", "oboe", "programmers", "go", "js"],
+    },
+    kate: {
+      fixture: {
+        name: "kate",
+        age: 20,
+        sex: "female" as const,
+      },
+      tags: ["women", "oboe"],
+    },
+  });
+
+const nik = fixture.one_by_name("nik");
+
+nik.remove_from_tags("go");
+nik.add_to_more_tags("rust");
+
+const nik_as_create_dto = nik.as.create_dto();
+/// make api req to create user, so get <id> in response
+console.debug(nik_as_create_dto());
+nik.update_data_source((data) => ({ ...data, id: "fist-user" }));
+const nik_as_detailed = nik.as.detailed();
+console.debug(nik_as_detailed);
+const programmers = fixture.many_with_tag("programmers");
+const programmers_detailed = programmers.as.detailed();
+programmers_detailed().forEach((p) => console.debug(p));
+```
