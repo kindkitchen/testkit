@@ -18,7 +18,7 @@ const data = {
   },
 };
 Deno.test("make_fixture (v3)", async (t) => {
-  await t.step("make_fixture should be invoked without errors", async (tt) => {
+  await t.step("make_fixture should be invoked without errors", async (t) => {
     const fixture = make_fixture
       .start_builder_chain
       .for_data_type<User>()
@@ -29,16 +29,16 @@ Deno.test("make_fixture (v3)", async (t) => {
       })
       .build(data);
 
-    await tt.step(
+    await t.step(
       "fixtures should be correctly distributed across the tags",
-      async (ttt) => {
-        await ttt.step("<all> tags should include all fixtures", () => {
+      async (t) => {
+        await t.step("<all> tags should include all fixtures", () => {
           const all = fixture.many_with_tag("all").as.it_is();
           expect(all()).toContainEqual(data.alex.fixture);
           expect(all()).toContainEqual(data.nik.fixture);
           expect(all()).toContainEqual(data.kate.fixture);
         });
-        await ttt.step(
+        await t.step(
           "<men> tags should include both alex and nik",
           () => {
             const men = fixture.many_with_tag("men").as.it_is();
@@ -47,7 +47,7 @@ Deno.test("make_fixture (v3)", async (t) => {
             expect(men()).toContainEqual(data.nik.fixture);
           },
         );
-        await ttt.step(
+        await t.step(
           "<men> tags should NOT include kate",
           () => {
             const men = fixture.many_with_tag("men").as.it_is();
@@ -57,34 +57,34 @@ Deno.test("make_fixture (v3)", async (t) => {
         );
       },
     );
-    await tt.step(
+    await t.step(
       "fixtures should be correctly reorganized after dynamic add/remove to/from tags",
-      async (ttt) => {
+      async (t) => {
         const unverified = fixture.many_with_tag("unverified").as.it_is();
-        await ttt.step("<unverified> should be empty", () => {
+        await t.step("<unverified> should be empty", () => {
           expect(unverified().length).toBe(0);
         });
         const kate = fixture.one_by_name("kate");
-        await ttt.step("kate should be appeared in <unverified>", () => {
+        await t.step("kate should be appeared in <unverified>", () => {
           kate.add_to_more_tags(
             "unverified",
           );
         });
-        await ttt.step("<unverified> should contain kate", () => {
+        await t.step("<unverified> should contain kate", () => {
           expect(unverified()).toContainEqual(kate.as.it_is()());
         });
-        await ttt.step("kate should be disappeared from <unverified>", () => {
+        await t.step("kate should be disappeared from <unverified>", () => {
           kate.remove_from_tags("unverified");
         });
-        await ttt.step("<unverified> should become empty again", () => {
+        await t.step("<unverified> should become empty again", () => {
           expect(unverified().length).toBe(0);
         });
       },
     );
-    await tt.step(
+    await t.step(
       "representation functions should work correctly",
-      async (ttt) => {
-        await ttt.step(
+      async (t) => {
+        await t.step(
           "data to view transformation function should not affect data-source",
           () => {
             const alex = fixture.one_by_name("alex").as.it_is();
@@ -94,21 +94,21 @@ Deno.test("make_fixture (v3)", async (t) => {
             expect(alex()).not.toHaveProperty("uuid");
           },
         );
-        await ttt.step(
+        await t.step(
           "updates on data-source should affect views",
-          async (tttt) => {
+          async (t) => {
             const nik = fixture.one_by_name("nik");
             const nik_as_it_is = nik.as.it_is();
-            await tttt.step("nik should not have <id> yet", () => {
+            await t.step("nik should not have <id> yet", () => {
               expect(typeof nik_as_it_is().id).toBe("undefined");
             });
-            await tttt.step("do update of nik's data-source with <id>", () => {
+            await t.step("do update of nik's data-source with <id>", () => {
               nik.update_data_source((d) => ({
                 ...d,
                 id: crypto.randomUUID(),
               }));
             });
-            await tttt.step("nik should have <id>", () => {
+            await t.step("nik should have <id>", () => {
               expect(typeof nik_as_it_is().id).toBe("string");
             });
           },
