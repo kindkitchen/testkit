@@ -209,23 +209,29 @@ export const make_fixture = {
                     one_by_name: (name) => ({
                       add_to_more_tags: (...tags) =>
                         tags.forEach((tag) => {
-                          const fixture = db.name_fixture.get(name)!;
-                          db.name_tag_fixture.get(name)!.set(tag, fixture);
-                          db.tag_name_fixture.get(tag)!.set(name, fixture);
+                          const fixture = db.name_fixture.get(name as string)!;
+                          db.name_tag_fixture.get(name as string)!.set(
+                            tag,
+                            fixture,
+                          );
+                          db.tag_name_fixture.get(tag)!.set(
+                            name as string,
+                            fixture,
+                          );
                         }),
                       remove_from_tags: (...tags) =>
                         tags.forEach((tag) => {
-                          db.name_tag_fixture.get(name)!.delete(tag);
-                          db.tag_name_fixture.get(tag)!.delete(name);
+                          db.name_tag_fixture.get(name as string)!.delete(tag);
+                          db.tag_name_fixture.get(tag)!.delete(name as string);
                         }),
                       update_data_source: (logic) =>
                         db.name_fixture.set(
-                          name,
-                          logic(db.name_fixture.get(name)!),
+                          name as string,
+                          logic(db.name_fixture.get(name as string)!),
                         ),
                       as: Object.entries(transformer).reduce((acc, [k, v]) => {
                         acc[k as keyof T_transformer] = (...args) =>
-                          v(db.name_fixture.get(name)!, ...args);
+                          v(db.name_fixture.get(name as string)!, ...args);
                         return acc;
                       }, {} as T_as),
                     }),
