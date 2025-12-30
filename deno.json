@@ -2,6 +2,8 @@
   "nodeModulesDir": "auto",
   "exactOptionalPropertyTypes": true,
   "imports": {
+    "@std/datetime": "jsr:@std/datetime@^0.225.6",
+    "@std/expect": "jsr:@std/expect@^1.0.17",
     "effect": "npm:effect@^3.19.13"
   },
   "name": "@kindkitchen/testing_lab",

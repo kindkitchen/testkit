@@ -237,10 +237,10 @@ export const make_fixture = {
                     }),
                     many_with_tag: (tag) => ({
                       as: Object.entries(transformer).reduce((acc, [k, fn]) => {
-                        acc[k as keyof T_transformer] = (...args) => {
+                        acc[k as keyof T_transformer] = () => (...args) => {
                           const views = db.tag_name_fixture.get(tag)!.values()
                             .toArray().map((value) => fn(value, ...args));
-                          return views as any;
+                          return views;
                         };
                         return acc;
                       }, {} as T_as_arr),
