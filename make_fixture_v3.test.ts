@@ -1,10 +1,11 @@
+import { verify } from "node:crypto";
 import { make_fixture } from "./make_fixture_v3.ts";
 import { expect } from "@std/expect";
 
 type User = {
   name: string;
 };
-type UserTag = "all" | "men" | "women" | "verified";
+type UserTag = "all" | "men" | "women" | "verified" | "unverified";
 const data = {
   alex: {
     fixture: { name: "alex" },
@@ -53,6 +54,24 @@ Deno.test("make_fixture (v3)", async (t) => {
             expect(men()).not.toContainEqual(data.kate.fixture);
           },
         );
+      },
+    );
+    await tt.step(
+      "fixtures should be correctly reorganized after dynamic ad/remove to/from tags",
+      async (ttt) => {
+        const unverified = fixture.many_with_tag("unverified").as.it_is();
+        await ttt.step("<unverified> should be empty", () => {
+          expect(unverified().length).toBe(0);
+        });
+        await ttt.step("kate should be appeared in <unverified>", () => {
+          fixture.one_by_name("kate").add_to_more_tags(
+            "unverified",
+          );
+        });
+        await ttt.step("<unverified> should contain kate", () => {
+          const kate = fixture.one_by_name("kate").as.it_is();
+          expect(unverified()).toContainEqual(kate());
+        });
       },
     );
   });
