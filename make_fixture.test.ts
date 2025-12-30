@@ -1,4 +1,4 @@
-import { make_fixture } from "./make_fixture_v3.ts";
+import { make_fixture } from "./make_fixture.ts";
 import { expect } from "@std/expect";
 
 type User = {

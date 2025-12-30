@@ -2,13 +2,11 @@
   "nodeModulesDir": "auto",
   "exactOptionalPropertyTypes": true,
   "imports": {
-    "@std/datetime": "jsr:@std/datetime@^0.225.6",
-    "@std/expect": "jsr:@std/expect@^1.0.17",
-    "effect": "npm:effect@^3.19.13"
+    "@std/expect": "jsr:@std/expect@^1.0.17"
   },
-  "name": "@kindkitchen/testing_lab",
-  "version": "v0.1.0",
+  "name": "@kindkitchen/testkit",
+  "version": "v0.2.0",
   "exports": {
-    "./make_fixture": "./make_fixture_v2.ts"
+    "./make_fixture": "./make_fixture.ts"
   }
 }
