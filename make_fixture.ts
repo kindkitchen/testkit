@@ -323,14 +323,30 @@ const fixture = make_fixture
         age: 23,
         sex: "male" as const,
       },
-      tags: ["men", "oboe", "programmers", "rust", "js"],
+      tags: ["men", "oboe", "programmers", "go", "js"],
     },
-    olivia: {
+    kate: {
       fixture: {
-        name: "olivia",
+        name: "kate",
         age: 20,
         sex: "female" as const,
       },
       tags: ["women", "oboe"],
     },
   });
+
+const nik = fixture
+  .one_by_name("nik");
+
+nik.remove_from_tags("go");
+nik.add_to_more_tags("rust");
+
+const nik_as_create_dto = nik.as.create_dto();
+/// make api req to create user, so get <id> in response
+console.log(nik_as_create_dto());
+nik.update_data_source((data) => ({ ...data, id: "fist-user" }));
+const nik_as_detailed = nik.as.detailed();
+console.log(nik_as_detailed);
+const programmers = fixture.many_with_tag("programmers");
+const programmers_detailed = programmers.as.detailed();
+programmers_detailed().forEach((p) => console.log(p));
