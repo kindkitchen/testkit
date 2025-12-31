@@ -1,0 +1,12 @@
+{
+  "include": [
+    "../src/make_fixture.ts"
+  ],
+  "compilerOptions": {
+    "outDir": "../dist",
+    "lib": [
+      "ESNext"
+    ],
+    "removeComments": true
+  }
+}

@@ -1,17 +1,52 @@
 {
+  "name": "@kindkitchen/testkit",
+  "version": "0.3.3",
+  "exports": {
+    "./make_fixture": "./dist/make_fixture.js",
+    "./make_fixture_ts": "./src/make_fixture.ts"
+  },
   "nodeModulesDir": "auto",
   "exactOptionalPropertyTypes": true,
   "imports": {
-    "@std/expect": "jsr:@std/expect@^1.0.17"
+    "@std/expect": "jsr:@std/expect@^1.0.17",
+    "typescript": "npm:typescript@^5.9.3"
   },
   "fmt": {
     "exclude": ["*.js"]
   },
-  "name": "@kindkitchen/testkit",
-  "version": "0.3.2",
-  "exports": {
-    "./make_fixture": "./make_fixture.js",
-    "./make_fixture_ts": "./make_fixture.ts"
-  },
-  "license": "MIT"
+  "license": "MIT",
+  "tasks": {
+    "clean": {
+      "description": "Remove build artifacts",
+      "command": "rm -fr dist"
+    },
+    "transpile": {
+      "description": "ts to js",
+      "command": "deno x tsc -p .config/tsconfig.json",
+      "dependencies": [
+        "clean"
+      ]
+    },
+    "format": {
+      "description": "Fix formatting",
+      "command": "deno fmt",
+      "dependencies": [
+        "transpile"
+      ]
+    },
+    "gitam": {
+      "description": "Quick git commit",
+      "command": "git add -A && git commit",
+      "dependencies": [
+        "format"
+      ]
+    },
+    "pr": {
+      "description": "Shortcut to create PR and merge dev branch into main",
+      "command": "git push origin dev && gh pr create --fill-verbose && gh pr merge --auto --merge",
+      "dependencies": [
+        "gitam"
+      ]
+    }
+  }
 }
