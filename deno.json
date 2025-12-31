@@ -4,6 +4,9 @@
   "imports": {
     "@std/expect": "jsr:@std/expect@^1.0.17"
   },
+  "fmt": {
+    "exclude": ["*.js"]
+  },
   "name": "@kindkitchen/testkit",
   "version": "0.3.2",
   "exports": {

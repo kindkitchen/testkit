@@ -70,55 +70,35 @@ var make_fixture = {
                  */
                 build: (fixture_set) => {
                   let last_id = Date.now();
-                  const db = Object.entries(fixture_set).reduce(
-                    (acc, [name, { fixture, tags }]) => {
-                      const id = ++last_id;
-                      acc.id_fixture.set(id, fixture);
-                      acc.name_tag_fixture.set(
-                        name,
-                        new Map(tags.map((t) => [
-                          t,
-                          id,
-                        ])),
-                      );
-                      acc.name_fixture.set(name, id);
-                      for (const tag of tags) {
-                        (acc.tag_name_fixture.get(tag) ||
-                          acc.tag_name_fixture.set(
-                            tag,
-                            /* @__PURE__ */ new Map(),
-                          ).get(tag)).set(name, id);
-                      }
-                      return acc;
-                    },
-                    {
-                      id_fixture: /* @__PURE__ */ new Map(),
-                      name_fixture: /* @__PURE__ */ new Map(),
-                      name_tag_fixture: /* @__PURE__ */ new Map(),
-                      tag_name_fixture: /* @__PURE__ */ new Map(),
-                    },
-                  );
+                  const db = Object.entries(fixture_set).reduce((acc, [name, { fixture, tags }]) => {
+                    const id = ++last_id;
+                    acc.id_fixture.set(id, fixture);
+                    acc.name_tag_fixture.set(name, new Map(tags.map((t) => [
+                      t,
+                      id
+                    ])));
+                    acc.name_fixture.set(name, id);
+                    for (const tag of tags) {
+                      (acc.tag_name_fixture.get(tag) || acc.tag_name_fixture.set(tag, /* @__PURE__ */ new Map()).get(tag)).set(name, id);
+                    }
+                    return acc;
+                  }, {
+                    id_fixture: /* @__PURE__ */ new Map(),
+                    name_fixture: /* @__PURE__ */ new Map(),
+                    name_tag_fixture: /* @__PURE__ */ new Map(),
+                    tag_name_fixture: /* @__PURE__ */ new Map()
+                  });
                   return {
                     one_by_name: (name) => ({
-                      add_to_more_tags: (...tags) =>
-                        tags.forEach((tag) => {
-                          const fixture = db.name_fixture.get(name);
-                          (db.name_tag_fixture.get(name) ||
-                            db.name_tag_fixture.set(
-                              name,
-                              /* @__PURE__ */ new Map(),
-                            ).get(name)).set(tag, fixture);
-                          (db.tag_name_fixture.get(tag) ||
-                            db.tag_name_fixture.set(
-                              tag,
-                              /* @__PURE__ */ new Map(),
-                            ).get(tag)).set(name, fixture);
-                        }),
-                      remove_from_tags: (...tags) =>
-                        tags.forEach((tag) => {
-                          db.name_tag_fixture.get(name).delete(tag);
-                          db.tag_name_fixture.get(tag).delete(name);
-                        }),
+                      add_to_more_tags: (...tags) => tags.forEach((tag) => {
+                        const fixture = db.name_fixture.get(name);
+                        (db.name_tag_fixture.get(name) || db.name_tag_fixture.set(name, /* @__PURE__ */ new Map()).get(name)).set(tag, fixture);
+                        (db.tag_name_fixture.get(tag) || db.tag_name_fixture.set(tag, /* @__PURE__ */ new Map()).get(tag)).set(name, fixture);
+                      }),
+                      remove_from_tags: (...tags) => tags.forEach((tag) => {
+                        db.name_tag_fixture.get(name).delete(tag);
+                        db.tag_name_fixture.get(tag).delete(name);
+                      }),
                       update_data_source: (logic) => {
                         const id = db.name_fixture.get(name);
                         const fixture = db.id_fixture.get(id);
@@ -131,35 +111,33 @@ var make_fixture = {
                           return v(db.id_fixture.get(id), ...args);
                         };
                         return acc;
-                      }, {}),
+                      }, {})
                     }),
                     many_with_tag: (tag) => ({
                       as: Object.entries(transformer).reduce((acc, [k, fn]) => {
                         acc[k] = () => (...args) => {
-                          const views = (db.tag_name_fixture.get(tag) || [])
-                            .values().toArray().map((id) =>
-                              fn(db.id_fixture.get(id), ...args)
-                            );
+                          const views = (db.tag_name_fixture.get(tag) || []).values().toArray().map((id) => fn(db.id_fixture.get(id), ...args));
                           return views;
                         };
                         return acc;
                       }, {}),
                       foreach_update_data_source: (logic) => {
-                        (db.tag_name_fixture.get(tag) || /* @__PURE__ */
-                          new Map()).entries().toArray().forEach(([_, v]) => {
-                            const fixture = db.id_fixture.get(v);
-                            db.id_fixture.set(v, logic(fixture));
-                          });
-                      },
-                    }),
+                        (db.tag_name_fixture.get(tag) || /* @__PURE__ */ new Map()).entries().toArray().forEach(([_, v]) => {
+                          const fixture = db.id_fixture.get(v);
+                          db.id_fixture.set(v, logic(fixture));
+                        });
+                      }
+                    })
                   };
-                },
+                }
               };
-            },
+            }
           };
-        },
+        }
       };
-    },
-  },
+    }
+  }
 };
-export { make_fixture };
+export {
+  make_fixture
+};
