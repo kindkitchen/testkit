@@ -3,7 +3,7 @@
     "../src/make_fixture.ts"
   ],
   "compilerOptions": {
-    "outDir": "../dist",
+    "outDir": "../transpiled",
     "lib": [
       "ESNext"
     ],

@@ -2,7 +2,7 @@
   "name": "@kindkitchen/testkit",
   "version": "0.3.3",
   "exports": {
-    "./make_fixture": "./dist/make_fixture.js",
+    "./make_fixture": "./transpiled/make_fixture.js",
     "./make_fixture_ts": "./src/make_fixture.ts"
   },
   "nodeModulesDir": "auto",
@@ -18,7 +18,7 @@
   "tasks": {
     "clean": {
       "description": "Remove build artifacts",
-      "command": "rm -fr dist"
+      "command": "rm -fr transpiled"
     },
     "transpile": {
       "description": "ts to js",
