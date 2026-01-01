@@ -1,0 +1,1 @@
+{"inputs":{"src/make_fixture.ts":{"bytes":12592,"imports":[],"format":"esm"}},"outputs":{"transpiled/make_fixture.js.map":{"imports":[],"exports":[],"inputs":{},"bytes":15327},"transpiled/make_fixture.js":{"imports":[],"exports":[],"entryPoint":"src/make_fixture.ts","inputs":{"src/make_fixture.ts":{"bytesInOutput":1510}},"bytes":1958}}}
