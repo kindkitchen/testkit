@@ -152,7 +152,7 @@ export const make_fixture = {
                   /**
                    * Api for manage list of fixtures with some tag.
                    */
-                  many_with_tag: (tag: TT) => {
+                  many_with_tags: (...tags: [TT, ...TT[]]) => {
                     to_array_of_fixtures: () => _T_One_By_Name[];
                     /**
                      * Generate array with representations for all fixtures marked by some tag.
@@ -257,16 +257,39 @@ export const make_fixture = {
 
                   return {
                     one_by_name,
-                    many_with_tag: (tag) => ({
-                      to_array_of_fixtures: () =>
-                        (db.tag_name_id.get(tag) || [])
-                          .values()
-                          .toArray().map((id) =>
-                            one_by_name(db.id_name.get(id)!)
-                          ),
+                    many_with_tags: (...tags: [TT, ...TT[]]) => ({
+                      to_array_of_fixtures: () => {
+                        const ids_by_tag = [] as Set<number>[];
+                        for (const tag of tags) {
+                          const ids = db.tag_name_id.get(tag)?.values().map((
+                            id,
+                          ) => id) || [];
+                          ids_by_tag.push(new Set(ids));
+                        }
+                        if (ids_by_tag.length) {
+                          const with_all_tags_ids = ids_by_tag.reduce((a, b) =>
+                            a.intersection(b)
+                          );
+
+                          const result: _T_One_By_Name[] = [];
+                          with_all_tags_ids.values().toArray().forEach((
+                            id,
+                          ) => {
+                            const name = db.id_name.get(id);
+                            if (name) {
+                              const f = one_by_name(name);
+                              result.push(f);
+                            }
+                          });
+
+                          return result;
+                        } else {
+                          return [];
+                        }
+                      },
                       as: Object.entries(transformer).reduce((acc, [k, fn]) => {
                         acc[k as keyof T_transformer] = () => (...args) => {
-                          const views = (db.tag_name_id.get(tag) || [])
+                          const views = (db.tag_name_id.get(tags[0]) || [])
                             .values()
                             .toArray().map((id) =>
                               fn(db.id_fixture.get(id)!, ...args)
@@ -276,7 +299,7 @@ export const make_fixture = {
                         return acc;
                       }, {} as T_as_arr),
                       foreach_update_data_source: (logic) => {
-                        (db.tag_name_id.get(tag) ||
+                        (db.tag_name_id.get(tags[0]) ||
                           new Map<string, number>()).entries()
                           .toArray()
                           .forEach(([_, v]) => {

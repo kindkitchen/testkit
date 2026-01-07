@@ -107,7 +107,7 @@ declare const make_fixture: {
                         /**
                          * Api for manage list of fixtures with some tag.
                          */
-                        many_with_tag: (tag: Exclude<T_tags, "" | "ERROR: Explicit generic is missing! Should be something like: with_possible_tags<['example', 'demo', 'tip']>()">) => {
+                        many_with_tags: (...tags: [Exclude<T_tags, "" | "ERROR: Explicit generic is missing! Should be something like: with_possible_tags<['example', 'demo', 'tip']>()">, ...Exclude<T_tags, "" | "ERROR: Explicit generic is missing! Should be something like: with_possible_tags<['example', 'demo', 'tip']>()">[]]) => {
                             to_array_of_fixtures: () => {
                                 /**
                                  * Generate representation of data, that you declared during build.
