@@ -289,23 +289,47 @@ export const make_fixture = {
                       },
                       as: Object.entries(transformer).reduce((acc, [k, fn]) => {
                         acc[k as keyof T_transformer] = () => (...args) => {
-                          const views = (db.tag_name_id.get(tags[0]) || [])
-                            .values()
-                            .toArray().map((id) =>
+                          const ids_by_tag = [] as Set<number>[];
+                          for (const tag of tags) {
+                            const ids = db.tag_name_id.get(tag)?.values().map((
+                              id,
+                            ) => id) || [];
+                            ids_by_tag.push(new Set(ids));
+                          }
+                          if (ids_by_tag.length) {
+                            const with_all_tags_ids = ids_by_tag.reduce((
+                              a,
+                              b,
+                            ) => a.intersection(b));
+
+                            return with_all_tags_ids.values().map((id) =>
                               fn(db.id_fixture.get(id)!, ...args)
-                            );
-                          return views;
+                            ).toArray();
+                          }
+
+                          return [];
                         };
                         return acc;
                       }, {} as T_as_arr),
                       foreach_update_data_source: (logic) => {
-                        (db.tag_name_id.get(tags[0]) ||
-                          new Map<string, number>()).entries()
-                          .toArray()
-                          .forEach(([_, v]) => {
-                            const fixture = db.id_fixture.get(v)!;
-                            db.id_fixture.set(v, logic(fixture));
+                        const ids_by_tag = [] as Set<number>[];
+                        for (const tag of tags) {
+                          const ids = db.tag_name_id.get(tag)?.values().map((
+                            id,
+                          ) => id) || [];
+                          ids_by_tag.push(new Set(ids));
+                        }
+                        if (ids_by_tag.length) {
+                          const with_all_tags_ids = ids_by_tag.reduce((
+                            a,
+                            b,
+                          ) => a.intersection(b));
+
+                          with_all_tags_ids.values().forEach((id) => {
+                            const fixture = db.id_fixture.get(id)!;
+                            db.id_fixture.set(id, logic(fixture));
                           });
+                        }
                       },
                     }),
                   };

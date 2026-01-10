@@ -30,6 +30,7 @@ Deno.test("make_fixture (v3)", async (t) => {
       .data_can_be_transformed_into_such_views({
         it_is: (d) => d,
         with_fake_uuid: (d, uuid: string) => ({ ...d, uuid }),
+        name: ({ name }) => name,
       })
       .build(data);
 
@@ -141,10 +142,21 @@ Deno.test("make_fixture (v3)", async (t) => {
      * So it is not all from <women> ang not all from <verified>, but
      * only ones, that are marked by both tags.
      */
-    await t.step("should get only matched by all specified tags", () => {
-      const actual = fixture.many_with_tags("women", "verified")
-        .to_array_of_fixtures().map((f) => f.as.it_is()().name);
-      expect(actual).toStrictEqual(["kate"]);
-    });
+    await t.step(
+      "many tags => fixtures: should get only matched by all specified tags",
+      () => {
+        const actual = fixture.many_with_tags("women", "verified")
+          .to_array_of_fixtures().map((f) => f.as.it_is()().name);
+        expect(actual).toStrictEqual(["kate"]);
+      },
+    );
+    await t.step(
+      "many tags => transformation: should get only matched by all specified tags",
+      () => {
+        const actual = fixture.many_with_tags("women", "verified")
+          .as.name();
+        expect(actual()).toStrictEqual(["kate"]);
+      },
+    );
   });
 });
