@@ -16,6 +16,10 @@ const data = {
     fixture: { name: "kate" },
     tags: ["all", "women", "verified"] as UserTag[],
   },
+  liza: {
+    fixture: { name: "liza" },
+    tags: ["all", "women"] as UserTag[],
+  },
 };
 Deno.test("make_fixture (v3)", async (t) => {
   await t.step("make_fixture should be invoked without errors", async (t) => {
@@ -26,6 +30,7 @@ Deno.test("make_fixture (v3)", async (t) => {
       .data_can_be_transformed_into_such_views({
         it_is: (d) => d,
         with_fake_uuid: (d, uuid: string) => ({ ...d, uuid }),
+        name: ({ name }) => name,
       })
       .build(data);
 
@@ -33,7 +38,7 @@ Deno.test("make_fixture (v3)", async (t) => {
       "fixtures should be correctly distributed across the tags",
       async (t) => {
         await t.step("<all> tags should include all fixtures", () => {
-          const all = fixture.many_with_tag("all").as.it_is();
+          const all = fixture.many_with_tags("all").as.it_is();
           expect(all()).toContainEqual(data.alex.fixture);
           expect(all()).toContainEqual(data.nik.fixture);
           expect(all()).toContainEqual(data.kate.fixture);
@@ -41,7 +46,7 @@ Deno.test("make_fixture (v3)", async (t) => {
         await t.step(
           "<men> tags should include both alex and nik",
           () => {
-            const men = fixture.many_with_tag("men").as.it_is();
+            const men = fixture.many_with_tags("men").as.it_is();
             expect(men().length).toBe(2);
             expect(men()).toContainEqual(data.alex.fixture);
             expect(men()).toContainEqual(data.nik.fixture);
@@ -50,7 +55,7 @@ Deno.test("make_fixture (v3)", async (t) => {
         await t.step(
           "<men> tags should NOT include kate",
           () => {
-            const men = fixture.many_with_tag("men").as.it_is();
+            const men = fixture.many_with_tags("men").as.it_is();
             expect(men().length).toBe(2);
             expect(men()).not.toContainEqual(data.kate.fixture);
           },
@@ -60,7 +65,7 @@ Deno.test("make_fixture (v3)", async (t) => {
     await t.step(
       "fixtures should be correctly reorganized after dynamic add/remove to/from tags",
       async (t) => {
-        const unverified = fixture.many_with_tag("unverified").as.it_is();
+        const unverified = fixture.many_with_tags("unverified").as.it_is();
         await t.step("<unverified> should be empty", () => {
           expect(unverified().length).toBe(0);
         });
@@ -113,6 +118,44 @@ Deno.test("make_fixture (v3)", async (t) => {
             });
           },
         );
+      },
+    );
+    await t.step(
+      "by tag mapped to list should behave as array of independent fixtures",
+      async (t) => {
+        for (const f of fixture.many_with_tags("men").to_array_of_fixtures()) {
+          await t.step(
+            "data to view transformation function should not affect data-source",
+            () => {
+              const alex = f.as.it_is();
+              const alex_with_uuid = f.as
+                .with_fake_uuid(crypto.randomUUID());
+              expect(alex_with_uuid()).toHaveProperty("uuid");
+              expect(alex()).not.toHaveProperty("uuid");
+            },
+          );
+        }
+      },
+    );
+
+    /**
+     * So it is not all from <women> ang not all from <verified>, but
+     * only ones, that are marked by both tags.
+     */
+    await t.step(
+      "many tags => fixtures: should get only matched by all specified tags",
+      () => {
+        const actual = fixture.many_with_tags("women", "verified")
+          .to_array_of_fixtures().map((f) => f.as.it_is()().name);
+        expect(actual).toStrictEqual(["kate"]);
+      },
+    );
+    await t.step(
+      "many tags => transformation: should get only matched by all specified tags",
+      () => {
+        const actual = fixture.many_with_tags("women", "verified")
+          .as.name();
+        expect(actual()).toStrictEqual(["kate"]);
       },
     );
   });

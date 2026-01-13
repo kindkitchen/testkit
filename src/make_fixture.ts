@@ -98,6 +98,40 @@ export const make_fixture = {
                   ...params: FirstRest<Parameters<T_transformer[k]>>[1]
                 ) => () => ReturnType<T_transformer[k]>;
               };
+              type _T_One_By_Name = {
+                /**
+                 * Generate representation of data, that you declared during build.
+                 * You will get not directly this representation, function: `() => representation`.
+                 * So until logic of the representation is the same it will automatically produce
+                 * it with actual values from data-source.
+                 */
+                as: T_as;
+                /**
+                 * Mark this fixture with some tags.
+                 * No matter does it is already marked by them or not, but
+                 * from now it will.
+                 */
+                add_to_more_tags: (...tag: TT[]) => void;
+                /**
+                 * Remove from fixture associations with ome tags.
+                 * No matter does it is already marked by them or not, but
+                 * from not it will not.
+                 */
+                remove_from_tags: (...tag: TT[]) => void;
+                /**
+                 * The only one correct way to update fixture's data.
+                 */
+                update_data_source: (
+                  /**
+                   * Your custom logic how to produce new data from previous varian.
+                   * Because it is function - you can do this with any custom logic
+                   * or even skip update because of some condition, though in such case you should
+                   * return input as it is...
+                   * So the rule is simple - data will be updated to whatever your function return.
+                   */
+                  update_logic: (d: TD) => TD,
+                ) => void;
+              };
               return {
                 /**
                  * Complete building fixture-set by providing
@@ -114,44 +148,12 @@ export const make_fixture = {
                   /**
                    * Api to manage one unique fixture.
                    */
-                  one_by_name: (name: keyof T_fixture_set) => {
-                    /**
-                     * Generate representation of data, that you declared during build.
-                     * You will get not directly this representation, function: `() => representation`.
-                     * So until logic of the representation is the same it will automatically produce
-                     * it with actual values from data-source.
-                     */
-                    as: T_as;
-                    /**
-                     * Mark this fixture with some tags.
-                     * No matter does it is already marked by them or not, but
-                     * from now it will.
-                     */
-                    add_to_more_tags: (...tag: TT[]) => void;
-                    /**
-                     * Remove from fixture associations with ome tags.
-                     * No matter does it is already marked by them or not, but
-                     * from not it will not.
-                     */
-                    remove_from_tags: (...tag: TT[]) => void;
-                    /**
-                     * The only one correct way to update fixture's data.
-                     */
-                    update_data_source: (
-                      /**
-                       * Your custom logic how to produce new data from previous varian.
-                       * Because it is function - you can do this with any custom logic
-                       * or even skip update because of some condition, though in such case you should
-                       * return input as it is...
-                       * So the rule is simple - data will be updated to whatever your function return.
-                       */
-                      update_logic: (d: TD) => TD,
-                    ) => void;
-                  };
+                  one_by_name: (name: keyof T_fixture_set) => _T_One_By_Name;
                   /**
                    * Api for manage list of fixtures with some tag.
                    */
-                  many_with_tag: (tag: TT) => {
+                  many_with_tags: (...tags: [TT, ...TT[]]) => {
+                    to_array_of_fixtures: () => _T_One_By_Name[];
                     /**
                      * Generate array with representations for all fixtures marked by some tag.
                      * It is also will return not directly array with these views but function,
@@ -181,14 +183,15 @@ export const make_fixture = {
                       (acc, [name, { fixture, tags }]) => {
                         const id = ++last_id;
                         acc.id_fixture.set(id, fixture);
-                        acc.name_tag_fixture.set(
+                        acc.name_tag_id.set(
                           name,
                           new Map(tags.map((t) => [t, id])),
                         );
-                        acc.name_fixture.set(name, id);
+                        acc.id_name.set(id, name);
+                        acc.name_id.set(name, id);
                         for (const tag of tags) {
-                          (acc.tag_name_fixture.get(tag) ||
-                            acc.tag_name_fixture.set(tag, new Map()).get(tag)!)
+                          (acc.tag_name_id.get(tag) ||
+                            acc.tag_name_id.set(tag, new Map()).get(tag)!)
                             .set(name, id);
                         }
 
@@ -196,81 +199,137 @@ export const make_fixture = {
                       },
                       {
                         id_fixture: new Map<number, TD>(),
-                        name_fixture: new Map<string, number>(),
-                        name_tag_fixture: new Map<
+                        name_id: new Map<string, number>(),
+                        id_name: new Map<number, string>(),
+                        name_tag_id: new Map<
                           string,
                           Map<string, number>
                         >(),
-                        tag_name_fixture: new Map<
+                        tag_name_id: new Map<
                           string,
                           Map<string, number>
                         >(),
                       },
                     );
 
-                  return {
-                    one_by_name: (name) => ({
-                      add_to_more_tags: (...tags) =>
-                        tags.forEach((tag) => {
-                          const fixture = db.name_fixture.get(name as string)!; /// 100% exists because all fixtures are provided at once;
-                          (db.name_tag_fixture.get(name as string) ||
-                            db.name_tag_fixture.set(name as string, new Map())
-                              .get(name as string)!)
-                            .set(
-                              tag,
-                              fixture,
-                            );
-                          (db.tag_name_fixture.get(tag) ||
-                            db.tag_name_fixture.set(tag, new Map()).get(tag)!)
-                            .set(
-                              name as string,
-                              fixture,
-                            );
-                        }),
-                      remove_from_tags: (...tags) =>
-                        tags.forEach((tag) => {
-                          db.name_tag_fixture.get(name as string)!.delete(tag);
-                          db.tag_name_fixture.get(tag)!.delete(name as string);
-                        }),
-                      update_data_source: (logic) => {
-                        const id = db.name_fixture.get(name as string)!;
-                        const fixture = db.id_fixture.get(id)!;
-                        const fresh = logic(
-                          fixture,
-                        );
-                        db.id_fixture.set(id, fresh);
-                      },
-                      as: Object.entries(transformer).reduce((acc, [k, v]) => {
-                        acc[k as keyof T_transformer] = (...args) => () => {
-                          const id = db.name_fixture.get(name as string)!;
-                          return v(
-                            db.id_fixture.get(id)!,
-                            ...args,
+                  const one_by_name = (name: keyof T_fixture_set) => ({
+                    add_to_more_tags: (...tags: string[]) =>
+                      tags.forEach((tag) => {
+                        const fixture = db.name_id.get(name as string)!; /// 100% exists because all fixtures are provided at once;
+                        (db.name_tag_id.get(name as string) ||
+                          db.name_tag_id.set(name as string, new Map())
+                            .get(name as string)!)
+                          .set(
+                            tag,
+                            fixture,
                           );
-                        };
-                        return acc;
-                      }, {} as T_as),
-                    }),
-                    many_with_tag: (tag) => ({
+                        (db.tag_name_id.get(tag) ||
+                          db.tag_name_id.set(tag, new Map()).get(tag)!)
+                          .set(
+                            name as string,
+                            fixture,
+                          );
+                      }),
+                    remove_from_tags: (...tags: string[]) =>
+                      tags.forEach((tag) => {
+                        db.name_tag_id.get(name as string)!.delete(tag);
+                        db.tag_name_id.get(tag)!.delete(name as string);
+                      }),
+                    update_data_source: (logic: Function) => {
+                      const id = db.name_id.get(name as string)!;
+                      const fixture = db.id_fixture.get(id)!;
+                      const fresh = logic(
+                        fixture,
+                      );
+                      db.id_fixture.set(id, fresh);
+                    },
+                    as: Object.entries(transformer).reduce((acc, [k, v]) => {
+                      acc[k as keyof T_transformer] = (...args) => () => {
+                        const id = db.name_id.get(name as string)!;
+                        return v(
+                          db.id_fixture.get(id)!,
+                          ...args,
+                        );
+                      };
+                      return acc;
+                    }, {} as T_as),
+                  });
+
+                  return {
+                    one_by_name,
+                    many_with_tags: (...tags: [TT, ...TT[]]) => ({
+                      to_array_of_fixtures: () => {
+                        const ids_by_tag = [] as Set<number>[];
+                        for (const tag of tags) {
+                          const ids = db.tag_name_id.get(tag)?.values().map((
+                            id,
+                          ) => id) || [];
+                          ids_by_tag.push(new Set(ids));
+                        }
+                        if (ids_by_tag.length) {
+                          const with_all_tags_ids = ids_by_tag.reduce((a, b) =>
+                            a.intersection(b)
+                          );
+
+                          const result: _T_One_By_Name[] = [];
+                          with_all_tags_ids.values().toArray().forEach((
+                            id,
+                          ) => {
+                            const name = db.id_name.get(id);
+                            if (name) {
+                              const f = one_by_name(name);
+                              result.push(f);
+                            }
+                          });
+
+                          return result;
+                        } else {
+                          return [];
+                        }
+                      },
                       as: Object.entries(transformer).reduce((acc, [k, fn]) => {
                         acc[k as keyof T_transformer] = () => (...args) => {
-                          const views = (db.tag_name_fixture.get(tag) || [])
-                            .values()
-                            .toArray().map((id) =>
+                          const ids_by_tag = [] as Set<number>[];
+                          for (const tag of tags) {
+                            const ids = db.tag_name_id.get(tag)?.values().map((
+                              id,
+                            ) => id) || [];
+                            ids_by_tag.push(new Set(ids));
+                          }
+                          if (ids_by_tag.length) {
+                            const with_all_tags_ids = ids_by_tag.reduce((
+                              a,
+                              b,
+                            ) => a.intersection(b));
+
+                            return with_all_tags_ids.values().map((id) =>
                               fn(db.id_fixture.get(id)!, ...args)
-                            );
-                          return views;
+                            ).toArray();
+                          }
+
+                          return [];
                         };
                         return acc;
                       }, {} as T_as_arr),
                       foreach_update_data_source: (logic) => {
-                        (db.tag_name_fixture.get(tag) ||
-                          new Map<string, number>()).entries()
-                          .toArray()
-                          .forEach(([_, v]) => {
-                            const fixture = db.id_fixture.get(v)!;
-                            db.id_fixture.set(v, logic(fixture));
+                        const ids_by_tag = [] as Set<number>[];
+                        for (const tag of tags) {
+                          const ids = db.tag_name_id.get(tag)?.values().map((
+                            id,
+                          ) => id) || [];
+                          ids_by_tag.push(new Set(ids));
+                        }
+                        if (ids_by_tag.length) {
+                          const with_all_tags_ids = ids_by_tag.reduce((
+                            a,
+                            b,
+                          ) => a.intersection(b));
+
+                          with_all_tags_ids.values().forEach((id) => {
+                            const fixture = db.id_fixture.get(id)!;
+                            db.id_fixture.set(id, logic(fixture));
                           });
+                        }
                       },
                     }),
                   };

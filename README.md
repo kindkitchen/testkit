@@ -46,7 +46,7 @@ input's data-set)_ and **list** of fixture associated with some tag.
 ## Example:
 
 ```ts
-import { make_fixture } from "./make_fixture.ts";
+import { make_fixture } from "./src/make_fixture.ts";
 
 type User = {
   id: string;
@@ -126,7 +126,7 @@ console.debug(nik_as_create_dto());
 nik.update_data_source((data) => ({ ...data, id: "fist-user" }));
 const nik_as_detailed = nik.as.detailed();
 console.debug(nik_as_detailed);
-const programmers = fixture.many_with_tag("programmers");
+const programmers = fixture.many_with_tags("programmers");
 const programmers_detailed = programmers.as.detailed();
 programmers_detailed().forEach((p) => console.debug(p));
 ```

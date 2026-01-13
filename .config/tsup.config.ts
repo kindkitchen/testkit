@@ -9,6 +9,8 @@ export default defineConfig({
   },
   format: "cjs",
   sourcemap: true,
+  metafile: true,
+  dts: true,
   clean: true,
   minify: true,
   cjsInterop: true,
