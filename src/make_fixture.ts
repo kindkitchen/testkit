@@ -1,22 +1,22 @@
 export const make_fixture = {
   /**
-   * A lot of properties are syntax sugar with purpose
-   * to simplify process of constructing pretty difficult
-   * internal data-structure for fixture. Also it may
-   * help to understand main ideas and purposes with which
+   * Many properties are syntax sugar with the purpose of
+   * simplifying the process of constructing the complex
+   * internal data-structure for fixtures. This also helps
+   * to understand the main ideas and purposes for which
    * it was developed.
    */
   start_builder_chain: {
     /**
      * The shape of the data source
      *
-     * This type is represent the all values,
-     * that can be used in dto, entities, models, etc.
-     * which will be produced from same source.
+     * This type represents all the values
+     * that can be used in DTOs, entities, models, etc.,
+     * which will be produced from the same source.
      * Example:
-     * The single data-set associated with user can be used
-     * for user creation, user updates, view full or compact
-     * user's representation, etc.
+     * A single dataset associated with a user can be used
+     * for user creation, user updates, viewing full or compact
+     * user representations, etc.
      * ```
      * make_fixture.for_data_type<{
      *   id: string;
@@ -25,7 +25,7 @@ export const make_fixture = {
      * }>() /// ...rest code
      * ```
      * #### Important!
-     * **This is generic type, that you should provide and nothing more**
+     * **This is a generic type that you should provide and nothing more.**
      */
     for_data_type: <
       T_data extends
@@ -38,19 +38,19 @@ export const make_fixture = {
     ) => {
       return {
         /**
-         * Next generic only helper, that should extend
-         * `string` type, for example:
+         * This next generic is only a helper that should extend
+         * the `string` type, for example:
          * ```
          * .with_possible_tags<"all", "verified_only", "men">
          * ```
-         * These tags will be used to mark fixtures and so have ability
-         * to group them by some criteria. Because this is tag - fixture
-         * can be belong to many groups at once.
+         * These tags will be used to mark fixtures and thereby give them the ability
+         * to group them by some criteria. Because this is a tag, a fixture
+         * can belong to many groups at once.
          *
-         * **At this moment though - you should simply register all possible variants
-         * for better typescript inference**
+         * **For now, you should simply register all possible variants
+         * for better TypeScript inference.**
          */
-        with_possible_tags: (<
+        with_possible_tags: <
           T_tags extends (
             | string
             | _T_help_message_with_possible_tags
@@ -68,17 +68,17 @@ export const make_fixture = {
 
           return {
             /**
-             * This is object, in which each property is represented
-             * particular dto/entity/view or state of your data.
-             * For example data, associated with user can contain many
+             * This is an object in which each property represents
+             * a particular DTO/entity/view or state of your data.
+             * For example, data associated with a user can contain many
              * properties, but during creation you skip `id` and so on.
-             * The value of each property is a function - that should
-             * transform initial data to some form.
+             * The value of each property is a function that should
+             * transform the **initial** data into some form.
              * Example:
              * ```
              * {
-             *    create_user_dto: (data) => ({ : data.email }),
-             *    update_user_dto: (data) => ([data.id, ])
+             *    create_user_dto: (data) => data.email,
+             *    update_user_dto: (data) => data.id,
              * }
              * ```
              */
@@ -100,9 +100,9 @@ export const make_fixture = {
               };
               return {
                 /**
-                 * Complete building fixture-set by providing
-                 * implementation.
-                 * Each property is fixture-wrapper, with fixture itself
+                 * Complete the building of the fixture-set by providing
+                 * the implementation.
+                 * Each property is a fixture-wrapper containing the fixture itself
                  * and all tags associated with this fixture.
                  */
                 build: <
@@ -112,62 +112,62 @@ export const make_fixture = {
                   >,
                 >(fixture_set: T_fixture_set): {
                   /**
-                   * Api to manage one unique fixture.
+                   * API to manage a single unique fixture.
                    */
                   one_by_name: (name: keyof T_fixture_set) => {
                     /**
-                     * Generate representation of data, that you declared during build.
-                     * You will get not directly this representation, function: `() => representation`.
-                     * So until logic of the representation is the same it will automatically produce
-                     * it with actual values from data-source.
+                     * Generate a representation of the data that you declared during the build.
+                     * You won't get this representation directly, but rather a function: `() => representation`.
+                     * So long as the logic of the representation remains the same, it will automatically produce
+                     * it with actual values from the data-source.
                      */
                     as: T_as;
                     /**
                      * Mark this fixture with some tags.
-                     * No matter does it is already marked by them or not, but
-                     * from now it will.
+                     * Regardless of whether it is already marked by them or not,
+                     * from now on, it will be.
                      */
                     add_to_more_tags: (...tag: TT[]) => void;
                     /**
-                     * Remove from fixture associations with ome tags.
-                     * No matter does it is already marked by them or not, but
-                     * from not it will not.
+                     * Remove fixture associations with some tags.
+                     * Regardless of whether it is already marked by them or not,
+                     * from now on, it will not be.
                      */
                     remove_from_tags: (...tag: TT[]) => void;
                     /**
-                     * The only one correct way to update fixture's data.
+                     * The correct way to update the fixture's data.
                      */
                     update_data_source: (
                       /**
-                       * Your custom logic how to produce new data from previous varian.
-                       * Because it is function - you can do this with any custom logic
-                       * or even skip update because of some condition, though in such case you should
-                       * return input as it is...
-                       * So the rule is simple - data will be updated to whatever your function return.
+                       * Your custom logic for producing new data from the previous variant.
+                       * Because it is a function, you can do this with any custom logic
+                       * or even skip the update based on some condition, though in such cases you should
+                       * return the input as is.
+                       * The rule is simple: data will be updated to whatever your function returns.
                        */
                       update_logic: (d: TD) => TD,
                     ) => void;
                   };
                   /**
-                   * Api for manage list of fixtures with some tag.
+                   * API for managing a list of fixtures with some tag.
                    */
                   many_with_tag: (tag: TT) => {
                     /**
-                     * Generate array with representations for all fixtures marked by some tag.
-                     * It is also will return not directly array with these views but function,
-                     * that will produce it. This will guarantee, that on each call
-                     * the representations will have actual values from data-source.
+                     * Generate an array with representations for all fixtures marked by some tag.
+                     * It will also return not an array directly with these views, but a function
+                     * that will produce it. This will guarantee that on each call,
+                     * the representations will have actual values from the data-source.
                      */
                     as: T_as_arr;
                     /**
-                     * Possibility to update all fixtures associated with
-                     * actual tag. Because this is function, any logic, including
-                     * skip during update can be implement.
-                     * The only rule - return value is one that will become new data-source.
+                     * Allows you to update all fixtures associated with
+                     * the actual tag. Because this is a function, any logic, including
+                     * skipping during update, can be implemented.
+                     * The only rule: the return value is what will become the new data-source.
                      */
                     foreach_update_data_source: (
                       /**
-                       * Custom logic of update, that will be applied to all
+                       * Custom update logic that will be applied to all
                        * fixtures under the current tag.
                        */
                       update_logic: (d: TD) => TD,
@@ -278,7 +278,7 @@ export const make_fixture = {
               };
             },
           };
-        }),
+        },
       };
     },
   },
