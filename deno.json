@@ -13,7 +13,8 @@
     "@std/expect": "jsr:@std/expect@^1.0.17",
     "@std/fs": "jsr:@std/fs@^1.0.21",
     "@std/path": "jsr:@std/path@^1.1.4",
-    "tsup": "npm:tsup@^8.5.1"
+    "tsup": "npm:tsup@^8.5.1",
+    "typescript": "npm:typescript@^6.0.3"
   },
   "fmt": {
     "exclude": ["dist", "transpiled"]
