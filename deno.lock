@@ -7,7 +7,8 @@
     "jsr:@std/internal@^1.0.10": "1.0.12",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/path@^1.1.4": "1.1.4",
-    "npm:tsup@^8.5.1": "8.5.1_esbuild@0.27.2"
+    "npm:tsup@^8.5.1": "8.5.1_typescript@6.0.3",
+    "npm:typescript@^6.0.3": "6.0.3"
   },
   "jsr": {
     "@std/assert@1.0.16": {
@@ -547,7 +548,7 @@
     "ts-interface-checker@0.1.13": {
       "integrity": "sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA=="
     },
-    "tsup@8.5.1_esbuild@0.27.2": {
+    "tsup@8.5.1_typescript@6.0.3": {
       "integrity": "sha512-xtgkqwdhpKWr3tKPmCkvYmS9xnQK3m3XgxZHwSUjvfTjp7YfXe5tT3GgWi0F2N+ZSMsOeWeZFh7ZZFg5iPhing==",
       "dependencies": [
         "bundle-require",
@@ -566,8 +567,16 @@
         "sucrase",
         "tinyexec",
         "tinyglobby",
-        "tree-kill"
+        "tree-kill",
+        "typescript"
       ],
+      "optionalPeers": [
+        "typescript"
+      ],
+      "bin": true
+    },
+    "typescript@6.0.3": {
+      "integrity": "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==",
       "bin": true
     },
     "ufo@1.6.1": {
@@ -579,7 +588,8 @@
       "jsr:@std/expect@^1.0.17",
       "jsr:@std/fs@^1.0.21",
       "jsr:@std/path@^1.1.4",
-      "npm:tsup@^8.5.1"
+      "npm:tsup@^8.5.1",
+      "npm:typescript@^6.0.3"
     ]
   }
 }
