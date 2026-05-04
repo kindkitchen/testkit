@@ -212,25 +212,28 @@ export const make_fixture = {
                     one_by_name: (name) => ({
                       add_to_more_tags: (...tags) =>
                         tags.forEach((tag) => {
-                          const fixture = db.name_fixture.get(name as string)!; /// 100% exists because all fixtures are provided at once;
+                          const id = db.name_fixture.get(name as string)!; /// 100% exists because all fixtures are provided at once;
                           (db.name_tag_fixture.get(name as string) ||
                             db.name_tag_fixture.set(name as string, new Map())
                               .get(name as string)!)
                             .set(
                               tag,
-                              fixture,
+                              id,
                             );
                           (db.tag_name_fixture.get(tag) ||
                             db.tag_name_fixture.set(tag, new Map()).get(tag)!)
                             .set(
                               name as string,
-                              fixture,
+                              id,
                             );
                         }),
                       remove_from_tags: (...tags) =>
                         tags.forEach((tag) => {
                           db.name_tag_fixture.get(name as string)!.delete(tag);
-                          db.tag_name_fixture.get(tag)!.delete(name as string);
+                          const tag_map = db.tag_name_fixture.get(tag);
+                          if (tag_map) {
+                            tag_map.delete(name as string);
+                          }
                         }),
                       update_data_source: (logic) => {
                         const id = db.name_fixture.get(name as string)!;
@@ -253,8 +256,9 @@ export const make_fixture = {
                     }),
                     many_with_tag: (tag) => ({
                       as: Object.entries(transformer).reduce((acc, [k, fn]) => {
-                        acc[k as keyof T_transformer] = () => (...args) => {
-                          const views = (db.tag_name_fixture.get(tag) || [])
+                        acc[k as keyof T_transformer] = (...args) => () => {
+                          const views = (db.tag_name_fixture.get(tag) ||
+                            new Map<string, number>())
                             .values()
                             .toArray().map((id) =>
                               fn(db.id_fixture.get(id)!, ...args)
