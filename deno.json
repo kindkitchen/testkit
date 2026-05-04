@@ -1,6 +1,6 @@
 {
   "name": "@kindkitchen/testkit",
-  "version": "0.3.7",
+  "version": "0.6.0",
   "exports": {
     "./make_fixture": "./transpiled/make_fixture.js",
     "./make_fixture_ts": "./src/make_fixture.ts"
