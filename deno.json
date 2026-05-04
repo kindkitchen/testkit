@@ -1,9 +1,9 @@
 {
   "name": "@kindkitchen/testkit",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "exports": {
-    "./make_fixture": "./transpiled/make_fixture.js",
-    "./make_fixture_ts": "./src/make_fixture.ts"
+    "./make_fixture_cjs": "./transpiled/make_fixture.js",
+    "./make_fixture": "./src/make_fixture.ts"
   },
   "nodeModulesDir": "auto",
   "compilerOptions": {
