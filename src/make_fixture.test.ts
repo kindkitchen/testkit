@@ -496,4 +496,355 @@ Deno.test("make_fixture advanced functionality and edge cases", async (t) => {
       );
     },
   );
+
+  await t.step(
+    "many_with_tags: multi-tag queries with AND logic",
+    async (t) => {
+      const fixture = make_fixture
+        .start_builder_chain
+        .for_data_type<User>()
+        .with_possible_tags<UserTag>()
+        .data_can_be_transformed_into_such_views({
+          it_is: (d) => d,
+        })
+        .build({
+          alex: {
+            fixture: { name: "alex" },
+            tags: ["all", "men", "verified"] as UserTag[],
+          },
+          nik: { fixture: { name: "nik" }, tags: ["all", "men"] as UserTag[] },
+          kate: {
+            fixture: { name: "kate" },
+            tags: ["all", "women", "verified"] as UserTag[],
+          },
+        });
+
+      await t.step(
+        "should return fixtures with ALL specified tags (AND logic)",
+        () => {
+          const menAndVerified = fixture.many_with_tags("men", "verified").as
+            .it_is()();
+          expect(menAndVerified.length).toBe(1);
+          expect(menAndVerified).toContainEqual(data.alex.fixture);
+        },
+      );
+
+      await t.step(
+        "should return empty array when no fixtures match ALL tags",
+        () => {
+          const womenAndMen = fixture.many_with_tags("women", "men").as
+            .it_is()();
+          expect(womenAndMen.length).toBe(0);
+        },
+      );
+
+      await t.step(
+        "should handle three or more tags correctly",
+        () => {
+          // alex has all three tags: all, men, verified
+          const allMenVerified = fixture.many_with_tags(
+            "all",
+            "men",
+            "verified",
+          ).as.it_is()();
+          expect(allMenVerified.length).toBe(1);
+          expect(allMenVerified).toContainEqual({ name: "alex" });
+
+          // no one has all four
+          const womenMenAllVerified = fixture.many_with_tags(
+            "women",
+            "men",
+            "all",
+            "verified",
+          ).as.it_is()();
+          expect(womenMenAllVerified.length).toBe(0);
+        },
+      );
+    },
+  );
+
+  await t.step(
+    "many_with_tags: to_array_of_fixtures() method",
+    async (t) => {
+      const fixture = make_fixture
+        .start_builder_chain
+        .for_data_type<User>()
+        .with_possible_tags<UserTag>()
+        .data_can_be_transformed_into_such_views({
+          it_is: (d) => d,
+        })
+        .build({
+          alex: {
+            fixture: { name: "alex" },
+            tags: ["all", "men", "verified"] as UserTag[],
+          },
+          nik: { fixture: { name: "nik" }, tags: ["all", "men"] as UserTag[] },
+          kate: {
+            fixture: { name: "kate" },
+            tags: ["all", "women", "verified"] as UserTag[],
+          },
+        });
+
+      await t.step(
+        "should return array of fixture management objects",
+        () => {
+          const menAndVerifiedFixtures = fixture.many_with_tags(
+            "men",
+            "verified",
+          ).to_array_of_fixtures();
+          expect(menAndVerifiedFixtures.length).toBe(1);
+
+          const alex = menAndVerifiedFixtures[0];
+          expect(alex.as.it_is()()).toEqual({ name: "alex" });
+        },
+      );
+
+      await t.step(
+        "should allow direct operations on returned fixture objects",
+        () => {
+          const menAndVerifiedFixtures = fixture.many_with_tags(
+            "men",
+            "verified",
+          ).to_array_of_fixtures();
+          const alex = menAndVerifiedFixtures[0];
+
+          // Update via the returned fixture object
+          alex.update_data_source((d: any) => ({
+            ...d,
+            id: "alex-id",
+          }));
+
+          const updated = alex.as.it_is()();
+          expect(updated.id).toBe("alex-id");
+        },
+      );
+
+      await t.step(
+        "should return empty array when no fixtures match",
+        () => {
+          const noMatches = fixture.many_with_tags("women", "men")
+            .to_array_of_fixtures();
+          expect(noMatches.length).toBe(0);
+          expect(noMatches).toEqual([]);
+        },
+      );
+    },
+  );
+
+  await t.step(
+    "many_with_tags: transformations with parameters",
+    async (t) => {
+      const fixture = make_fixture
+        .start_builder_chain
+        .for_data_type<User>()
+        .with_possible_tags<UserTag>()
+        .data_can_be_transformed_into_such_views({
+          it_is: (d) => d,
+          with_prefix: (d, prefix: string) => ({
+            ...d,
+            name: `${prefix}${d.name}`,
+          }),
+          with_id_and_title: (d, id: string, title: string) => ({
+            ...d,
+            id,
+            name: `${title} ${d.name}`,
+          }),
+        })
+        .build({
+          alex: {
+            fixture: { name: "alex" },
+            tags: ["all", "men", "verified"] as UserTag[],
+          },
+          nik: { fixture: { name: "nik" }, tags: ["all", "men"] as UserTag[] },
+          kate: {
+            fixture: { name: "kate" },
+            tags: ["all", "women", "verified"] as UserTag[],
+          },
+        });
+
+      await t.step(
+        "should apply transformations with parameters to matching fixtures",
+        () => {
+          const verifiedWithPrefix = fixture.many_with_tags(
+            "verified",
+            "all",
+          ).as.with_prefix("Dr. ")();
+          expect(verifiedWithPrefix.length).toBe(2);
+          expect(verifiedWithPrefix).toContainEqual({ name: "Dr. alex" });
+          expect(verifiedWithPrefix).toContainEqual({ name: "Dr. kate" });
+        },
+      );
+
+      await t.step(
+        "should handle multiple parameters correctly",
+        () => {
+          const menVerified = fixture.many_with_tags(
+            "men",
+            "verified",
+          ).as.with_id_and_title("M001", "Mr.")();
+          expect(menVerified.length).toBe(1);
+          expect(menVerified[0]).toEqual({
+            name: "Mr. alex",
+            id: "M001",
+          });
+        },
+      );
+    },
+  );
+
+  await t.step(
+    "many_with_tags: foreach_update_data_source with multiple tags",
+    async (t) => {
+      const fixture = make_fixture
+        .start_builder_chain
+        .for_data_type<User>()
+        .with_possible_tags<UserTag>()
+        .data_can_be_transformed_into_such_views({
+          it_is: (d) => d,
+        })
+        .build({
+          alex: {
+            fixture: { name: "alex" },
+            tags: ["all", "men", "verified"] as UserTag[],
+          },
+          nik: { fixture: { name: "nik" }, tags: ["all", "men"] as UserTag[] },
+          kate: {
+            fixture: { name: "kate" },
+            tags: ["all", "women", "verified"] as UserTag[],
+          },
+        });
+
+      await t.step(
+        "should update only fixtures matching ALL specified tags",
+        () => {
+          fixture.many_with_tags("verified", "all").foreach_update_data_source(
+            (d) => ({
+              ...d,
+              id: "verified-id",
+            }),
+          );
+
+          const alex = fixture.one_by_name("alex").as.it_is()();
+          const nik = fixture.one_by_name("nik").as.it_is()();
+          const kate = fixture.one_by_name("kate").as.it_is()();
+
+          expect(alex.id).toBe("verified-id");
+          expect(kate.id).toBe("verified-id");
+          expect(nik.id).toBeUndefined();
+        },
+      );
+
+      await t.step(
+        "should handle conditional updates correctly",
+        () => {
+          fixture.many_with_tags("all", "verified").foreach_update_data_source(
+            (d) => {
+              if (d.name === "kate") {
+                return { ...d, id: "kate-special-id" };
+              }
+              return { ...d, id: "other-verified-id" };
+            },
+          );
+
+          const alex = fixture.one_by_name("alex").as.it_is()();
+          const kate = fixture.one_by_name("kate").as.it_is()();
+
+          expect(alex.id).toBe("other-verified-id");
+          expect(kate.id).toBe("kate-special-id");
+        },
+      );
+
+      await t.step(
+        "should not update when no fixtures match the tag combination",
+        () => {
+          const initialNik = { ...fixture.one_by_name("nik").as.it_is()() };
+
+          fixture.many_with_tags("women", "men").foreach_update_data_source(
+            (d) => ({
+              ...d,
+              id: "should-not-apply",
+            }),
+          );
+
+          const nik = fixture.one_by_name("nik").as.it_is()();
+          expect(nik.id).toEqual(initialNik.id);
+        },
+      );
+    },
+  );
+
+  await t.step(
+    "many_with_tags: edge cases and complex scenarios",
+    async (t) => {
+      await t.step(
+        "should correctly handle dynamic tag changes with multi-tag queries",
+        () => {
+          const fixture = make_fixture
+            .start_builder_chain
+            .for_data_type<User>()
+            .with_possible_tags<UserTag>()
+            .data_can_be_transformed_into_such_views({
+              it_is: (d) => d,
+            })
+            .build({
+              person: {
+                fixture: { name: "person" },
+                tags: ["all", "men"] as UserTag[],
+              },
+            });
+
+          // Initially should not match
+          let result = fixture.many_with_tags("men", "verified").as.it_is()();
+          expect(result.length).toBe(0);
+
+          // Add verified tag
+          fixture.one_by_name("person").add_to_more_tags("verified");
+          result = fixture.many_with_tags("men", "verified").as.it_is()();
+          expect(result.length).toBe(1);
+
+          // Remove verified tag
+          fixture.one_by_name("person").remove_from_tags("verified");
+          result = fixture.many_with_tags("men", "verified").as.it_is()();
+          expect(result.length).toBe(0);
+        },
+      );
+
+      await t.step(
+        "should maintain consistency between single-tag and multi-tag queries",
+        () => {
+          const fixture = make_fixture
+            .start_builder_chain
+            .for_data_type<User>()
+            .with_possible_tags<UserTag>()
+            .data_can_be_transformed_into_such_views({
+              it_is: (d) => d,
+            })
+            .build({
+              alex: {
+                fixture: { name: "alex" },
+                tags: ["all", "men", "verified"] as UserTag[],
+              },
+              kate: {
+                fixture: { name: "kate" },
+                tags: ["all", "women", "verified"] as UserTag[],
+              },
+            });
+
+          const singleTagResult = fixture.many_with_tag("verified").as
+            .it_is()();
+          const multiTagBothVerified = fixture.many_with_tags(
+            "verified",
+            "all",
+          ).as.it_is()();
+
+          // Multi-tag should be subset of single-tag
+          expect(multiTagBothVerified.length).toBeLessThanOrEqual(
+            singleTagResult.length,
+          );
+          expect(singleTagResult.length).toBe(2); // alex and kate
+          expect(multiTagBothVerified.length).toBe(2); // both have all + verified
+        },
+      );
+    },
+  );
 });
